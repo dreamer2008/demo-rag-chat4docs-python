@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_models import ChatOpenAI
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_community.llms import HuggingFaceHub
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
@@ -31,7 +32,7 @@ class ModelType(Enum):
 
 def main():
     load_dotenv()
-    model_type = ModelType.OPEN_AI
+    model_type = ModelType.HUGGINGFACE
     st.set_page_config(page_title="Chat with documents", page_icon=":books:")
     st.write(css, unsafe_allow_html=True)
 
@@ -101,6 +102,11 @@ def get_vector_store(chunks, model_type):
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             openai_api_base=os.getenv("OPENAI_BASE_URL")
         )
+    elif model_type == ModelType.HUGGINGFACE:
+        embeddings = HuggingFaceInferenceAPIEmbeddings(
+            api_key=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+            model="sentence-transformers/all-MiniLM-L6-v2"
+        )
     else:
         # embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
@@ -112,7 +118,7 @@ def get_llm_model(model_type):
     if model_type == ModelType.GOOGLE_GENAI:
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest")
     elif model_type == ModelType.HUGGINGFACE:
-        llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature": 0.5, "max_length": 512})
+        llm = HuggingFaceHub(repo_id="google/flan-t5-base")
     elif model_type == ModelType.OPEN_AI:
         llm = ChatOpenAI(
             openai_api_key=os.getenv("OPENAI_API_KEY"),
